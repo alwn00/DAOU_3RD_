@@ -2333,7 +2333,7 @@ function homeBody(){
     + '<div class="sortbar"><span class="sl">정렬</span>'+[['trending','🔥 트렌딩'],['adopts','📖 가져가기순'],['tries','🧪 체험순'],['recent','🆕 최신순'],['rating','⭐ 추천순']].map(o=>'<button class="sort-tab'+((state.sort||'trending')===o[0]?' active':'')+'" onclick="setSort(\''+o[0]+'\')">'+o[1]+'</button>').join('')+'</div>'
     + '<div class="grid">'+sortedAssets(ASSETS).map(assetCard).join('')+'</div>';
   h += '<div class="home-bottom">'
-    +   '<div class="widget card"><h4>👑 이번 분기 AI 활용 리더 <small style="font-weight:400;color:var(--ink-faint)">— 점수 아님, 그냥 명예</small></h4>'
+    +   '<div class="widget card"><h4>👑 이번 분기 AI 활용 리더 <small style="font-weight:400;color:var(--ink-faint)">— 업무 활용 기록 기준</small></h4>'
     +     TOP_READERS.map((r,i)=>'<div class="reader-row r'+(i+1)+'"><span class="rank">'+(i+1)+'</span><span>'+esc(r.name)+'</span><span class="cnt">'+r.cnt+'개</span></div>').join('')
     +     '<div class="note"><b>소비 측 랭킹 — 공급자(제작자) 랭킹은 없습니다.</b> 분기마다 리셋 · 가져가기 수만 집계 · <b>SCORE_LEDGER 미참조</b> — "의미 없지만 기분 좋은" 랭킹입니다</div></div>'
     +   '<div class="widget card wish-banner" onclick="nav(\'wish\')">'
@@ -2799,8 +2799,8 @@ function renderMy(mode){
     h += '<div class="section-title" style="margin-top:26px">🗓 활동 캘린더 <small>그날 가져오거나 사용한 자산 — 교보문고 활동 달력처럼</small></div>'
       + '<div id="cal-host">'+renderCalendar()+'</div>';
     /* AI 활용 리더 진행 (유지) */
-    h += '<div class="card widget" style="margin-top:14px"><h4>👑 AI 활용 리더 진행</h4><div style="font-size:.95rem">이번 분기 나의 가져가기 <b>'+(19+state.myShelf.length)+'개</b> — AI 활용 리더 컷(25개 [가정])까지 <b style="color:var(--green)">'+Math.max(0,25-(19+state.myShelf.length))+'개</b> 남았어요 <small style="color:var(--ink-faint)">(순위표 전체는 보여주지 않아요 — 나와 컷의 거리만)</small></div>'
-      + '<div class="note">AI 활용 리더은 점수가 아닙니다 — "의미 없지만 기분 좋은" 명예 랭킹 · 분기 리셋</div></div>';
+    h += '<div class="card widget" style="margin-top:14px"><h4>👑 AI 활용 리더 진행</h4><div style="font-size:.95rem">이번 분기 나의 가져가기 <b>'+(19+state.myShelf.length)+'개</b> — TOP 기준 25개까지 <b style="color:var(--green)">'+Math.max(0,25-(19+state.myShelf.length))+'개</b> 남았어요 <small style="color:var(--ink-faint)">(순위표 전체는 보여주지 않아요 — 나와 컷의 거리만)</small></div>'
+      + '<div class="note">AI 활용 리더는 점수가 아닙니다 — 인사평가·기여 점수와 연결되지 않는 분기별 활용 현황</div></div>';
   } else {
     h += '<div class="dash-grid" style="margin-top:22px">'
       + '<div class="stat-card card"><div class="lb">누적 점수 (원장 합계)</div><div class="val">'+totalPts+'점</div><div class="sub">SCORE_LEDGER 파생값 — 깎이는 이벤트 없음</div></div>'
@@ -3947,7 +3947,7 @@ renderHome=function(){
     +'<div class="section-title">📡 AI 트렌드 <small>빠른 공유 · 집단 검증 · AX 사후 큐레이션</small><button class="more" onclick="nav(\'radar\')">전체 보기 →</button></div>'
     +'<div class="home-radar-grid">'+radar.map(p=>'<div class="card home-radar-card" onclick="nav(\'radar\')"><div class="ttl">'+esc(p.title)+(p.verified?' <span class="status-chip verified">검증</span>':'')+'</div><div class="meta">'+esc(p.by)+' · 댓글 '+((p.commentList||[]).length||p.comments||0)+'</div><div class="body">'+esc(p.body)+'</div></div>').join('')+'</div>'
     +'<div class="home-bottom">'
-    +'<div class="widget card keep-metaphor"><h4>👑 이번 분기 AI 활용 리더 <small style="font-weight:400;color:var(--ink-faint)">— 점수가 아닌 가벼운 참여 기록</small></h4>'
+    +'<div class="widget card keep-metaphor"><h4>👑 이번 분기 AI 활용 리더 <small style="font-weight:400;color:var(--ink-faint)">— 업무 활용 기록 기준</small></h4>'
     +TOP_READERS.map((r,i)=>'<div class="reader-row r'+(i+1)+'"><span class="rank">'+(i+1)+'</span><span>'+esc(r.name)+'</span><span class="cnt">'+r.cnt+'개 활용</span></div>').join('')
     +'<div class="note">자산을 많이 활용한 기록만 집계하며 인사평가·기여 점수와 연결하지 않습니다.</div></div>'
     +'<div class="widget card wish-banner" onclick="nav(\'wish\')"><div class="big">💡 현업의 AI 제작 요청 '+openReq+'건</div><div>필요한 AI를 제안하거나 AI 공동 개발에 참여할 수 있습니다.</div><button class="cta">제작 요청 보기 →</button></div>'
