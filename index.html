@@ -882,7 +882,7 @@ body.xray-on main{padding-bottom:90px!important}
 
 /* ============================================================
    v7 — 피드백 완전 반영 패치
-   핵심 운영 흐름을 전면에, 서비스 컨셉는 다독왕·내 활동에만 제한
+   핵심 운영 흐름을 전면에, 서비스 컨셉는 AI 활용 리더·내 활동에만 제한
    ============================================================ */
 .discovery-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}
 .discovery-tabs button{border:1px solid var(--line);background:#fff;color:var(--ink-soft);padding:9px 14px;border-radius:5px;font-size:.88rem;font-weight:700}
@@ -1910,7 +1910,7 @@ const WISHES = [
  {id:8, q:'신입사원 질문에 답해주는 봇이 있었으면', by:'교육팀', votes:16, status:'FULFILLED', assetId:12, needs:[]}
 ];
 
-/* 다독왕 (V_TOP_READER 집계 목업 — SCORE_LEDGER 미참조) */
+/* AI 활용 리더 (V_TOP_READER 집계 목업 — SCORE_LEDGER 미참조) */
 const TOP_READERS = [
  {name:'채용요정', dept:'인사팀', cnt:23},
  {name:'자동화장인', dept:'개발1팀', cnt:19},
@@ -2799,8 +2799,8 @@ function renderMy(mode){
     h += '<div class="section-title" style="margin-top:26px">🗓 활동 캘린더 <small>그날 가져오거나 사용한 자산 — 교보문고 활동 달력처럼</small></div>'
       + '<div id="cal-host">'+renderCalendar()+'</div>';
     /* AI 활용 리더 진행 (유지) */
-    h += '<div class="card widget" style="margin-top:14px"><h4>👑 AI 활용 리더 진행</h4><div style="font-size:.95rem">이번 분기 나의 가져가기 <b>'+(19+state.myShelf.length)+'개</b> — 다독왕 컷(25개 [가정])까지 <b style="color:var(--green)">'+Math.max(0,25-(19+state.myShelf.length))+'개</b> 남았어요 <small style="color:var(--ink-faint)">(순위표 전체는 보여주지 않아요 — 나와 컷의 거리만)</small></div>'
-      + '<div class="note">다독왕은 점수가 아닙니다 — "의미 없지만 기분 좋은" 명예 랭킹 · 분기 리셋</div></div>';
+    h += '<div class="card widget" style="margin-top:14px"><h4>👑 AI 활용 리더 진행</h4><div style="font-size:.95rem">이번 분기 나의 가져가기 <b>'+(19+state.myShelf.length)+'개</b> — AI 활용 리더 컷(25개 [가정])까지 <b style="color:var(--green)">'+Math.max(0,25-(19+state.myShelf.length))+'개</b> 남았어요 <small style="color:var(--ink-faint)">(순위표 전체는 보여주지 않아요 — 나와 컷의 거리만)</small></div>'
+      + '<div class="note">AI 활용 리더은 점수가 아닙니다 — "의미 없지만 기분 좋은" 명예 랭킹 · 분기 리셋</div></div>';
   } else {
     h += '<div class="dash-grid" style="margin-top:22px">'
       + '<div class="stat-card card"><div class="lb">누적 점수 (원장 합계)</div><div class="val">'+totalPts+'점</div><div class="sub">SCORE_LEDGER 파생값 — 깎이는 이벤트 없음</div></div>'
@@ -3488,7 +3488,7 @@ function renderVision(){
     ['자산','AI 자산 (설정형 AI 에이전트 · 벤더 중립)'],
     ['등록 신청 → 심사 → 공개','등록 심의 (위험 검증 + 활용성 확인)'],
     ['가져가기','가져가기(Adopt) — 사본 생성 + 내 환경 맞춤'],
-    ['다독왕','많이 빌려 쓴 사람 랭킹 (소비 측 · 공급자 랭킹 없음)'],
+    ['AI 활용 리더','많이 빌려 쓴 사람 랭킹 (소비 측 · 공급자 랭킹 없음)'],
     ['AI 제작 요청','수요 게시판 — 채택해 개발한 제작자에게 가점'],
     ['내 자산함 · 내 어항','마이페이지 + 마일스톤 물고기(배움/공급 기록)']
   ];
@@ -3515,7 +3515,7 @@ function renderVision(){
 
 /* ============================================================
    [v6 통합 시연 패치]
-   기존 사용자 경험·다독왕·부서별 인기·교육·AI 공동 개발을 유지하면서
+   기존 사용자 경험·AI 활용 리더·부서별 인기·교육·AI 공동 개발을 유지하면서
    AX기획/AX개발의 심사·배포 상태를 하나의 자산 흐름으로 연결한다.
    ============================================================ */
 
