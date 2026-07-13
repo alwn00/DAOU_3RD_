@@ -1,0 +1,205 @@
+name: Apply UI scope fix
+
+on:
+  push:
+    branches:
+      - agent/home-and-collab-visibility
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/home-and-collab-visibility
+
+      - name: Patch index.html
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          # 1) 현재 사용되는 홈(v9)에서 핫 스레드 영역을 제거하고 활용 리더를 단독 영역으로 확장
+          home_pattern = re.compile(
+              r"\n\s*\+'<div class=\"home-two-col\">'.*?"
+              r"\n\s*\+'<section class=\"home-section\"><div class=\"home-section-head\"><h3>🤝 AI 공동 개발 요청</h3>'",
+              re.S,
+          )
+          home_replacement = r'''
+              +'<section class="home-section keep-metaphor"><div class="home-section-head"><h3>👑 이번 분기 AI 활용 리더 TOP 3</h3><button onclick="nav(\'my\')">내 활동 →</button></div>'
+              +'<div class="card home-panel"><div class="reader-top3">'+TOP_READERS.slice(0,3).map((r,i)=>'<div class="reader-rank-card r'+(i+1)+'">'
+                +'<div class="rr-rank">'+(i+1)+'</div><div><div class="rr-name">'+esc(r.name)+'</div><div class="rr-dept">'+esc(readerDeptV9(r.name))+'</div></div>'
+                +'<div class="rr-count">'+r.cnt+'개 활용</div></div>').join('')+'</div>'
+                +'<div class="reader-note">AI 자산 가져오기·실행·재사용 활동 기준이며 인사평가·기여 점수와 연결하지 않습니다.</div></div></section>'
+
+              +'<section class="home-section"><div class="home-section-head"><h3>🤝 AI 공동 개발 요청</h3>' '''
+          text, home_count = home_pattern.subn(home_replacement, text, count=1)
+          if home_count != 1:
+              raise SystemExit(f'홈 영역 패턴을 찾지 못했습니다: {home_count}')
+
+          # 사용하지 않게 된 홈 핫 스레드 데이터 변수 제거
+          text = text.replace("  const radar=hot트렌드PostsV9();\n", "")
+
+          # 2) 관련 화면 용어를 일관되게 변경
+          replacements = {
+              '이번 분기 다독왕 TOP 3': '이번 분기 AI 활용 리더 TOP 3',
+              '이번 분기 다독왕': '이번 분기 AI 활용 리더',
+              '다독왕 진행': 'AI 활용 리더 진행',
+              '다독왕은 평가나 기여 점수가 아닌 가벼운 활용 기록입니다.': 'AI 활용 리더는 인사평가나 기여 점수와 연결되지 않는 활용 현황입니다.',
+              '다독왕과 개인 활동 기록': 'AI 활용 현황과 개인 활동 기록',
+              '다독왕 기록': 'AI 활용 기록',
+              '다독왕 집계': 'AI 활용 집계',
+          }
+          for before, after in replacements.items():
+              text = text.replace(before, after)
+
+          # 3) 공개 공동 개발 화면에서는 권한·인수인계 관리 블록을 노출하지 않음
+          old_insert = "root.insertAdjacentHTML('afterbegin','<div class=\"ax-hero\"><div><h2>🤝 AI 공동 개발</h2><p>현업의 아이디어와 개발 역량을 연결하고, 소유자·공동 관리자·기여 이력으로 지속 운영합니다.</p></div></div>'+collabGovernanceHTMLV7());"
+          new_insert = "root.insertAdjacentHTML('afterbegin','<div class=\"ax-hero\"><div><h2>🤝 AI 공동 개발</h2><p>진행 중인 프로젝트와 필요한 역할을 확인하고 참여를 신청합니다.</p></div></div>');"
+          if old_insert not in text:
+              raise SystemExit('공동 개발 공개 화면 삽입 패턴을 찾지 못했습니다.')
+          text = text.replace(old_insert, new_insert, 1)
+
+          # 4) 내 자산함에 전용 공동 개발 관리 탭 추가
+          marker = '<script id="collab-my-scope-patch">'
+          if marker not in text:
+              patch = r'''
+          <script id="collab-my-scope-patch">
+          (function(){
+            function collabActor(){
+              return (typeof ACTORS!=='undefined' && ACTORS[state.actor]) ? ACTORS[state.actor] : ME;
+            }
+            function collabActorName(){ return collabActor().name || ME.name; }
+            function collabActorDept(){ return collabActor().dept || ME.dept; }
+            function canManageCollab(e){
+              const me=collabActorName();
+              return e.owner===me || (e.coManagers||[]).includes(me);
+            }
+            function myCollabProjects(){
+              if(typeof ENSEMBLES==='undefined') return [];
+              const me=collabActorName();
+              return ENSEMBLES.filter(e=>e.owner===me || (e.coManagers||[]).includes(me) || (e.members||[]).includes(me));
+            }
+            function collabTabs(mode){
+              return '<div class="asset-vault-tabs">'
+                +'<button class="'+(mode==='reader'?'active':'')+'" onclick="renderMyIn(\'reader\')">가져온 자산</button>'
+                +'<button class="'+(mode==='creator'?'active':'')+'" onclick="renderMyIn(\'creator\')">내가 만든 자산</button>'
+                +'<button data-tab="collab" class="'+(mode==='collab'?'active':'')+'" onclick="renderMyIn(\'collab\')">공동 개발 관리</button></div>';
+            }
+            function collabManagementHTML(){
+              const projects=myCollabProjects();
+              let h='<div class="section-title" style="margin-top:22px">🤝 AI 공동 개발 권한과 인수인계 <small>내가 참여한 프로젝트의 역할·소유권·인수인계 상태</small></div>';
+              if(!projects.length){
+                return h+'<div class="empty"><div class="big">🤝</div>현재 참여 중인 공동 개발 프로젝트가 없습니다.<br><br><button class="btn btn-primary" onclick="nav(\'orchestra\')">공동 개발 프로젝트 찾기</button></div>';
+              }
+              h+='<div class="collab-governance">'+projects.map(e=>{
+                const me=collabActorName();
+                const manageable=canManageCollab(e);
+                const role=e.owner===me?'프로젝트 소유자':(e.coManagers||[]).includes(me)?'공동 관리자':'참여자';
+                const latest=(e.audit||[])[0];
+                return '<div class="card collab-project"><div class="cp-head"><span class="cp-title">'+esc(e.title)+'</span><span class="pill">'+esc(e.projectStatus||'IN_PROGRESS')+'</span><span class="status-chip verified">'+esc(role)+'</span></div>'
+                  +'<div class="cp-meta"><b>프로젝트 소유자</b> '+esc(e.owner)+'<br><b>공동 관리자</b> '+((e.coManagers||[]).length?(e.coManagers||[]).map(esc).join(', '):'미지정')+'<br><b>참여자</b> '+(e.members||[]).map(esc).join(', ')+'</div>'
+                  +'<div class="cp-meta" style="margin-top:9px"><b>인수인계 상태</b> '+(latest?esc(latest.event)+' · '+esc(latest.at||'최근'):'진행 이력 없음')+'</div>'
+                  +(manageable?'<div class="cp-actions"><button class="btn btn-secondary" onclick="addCoManagerV7(\''+e.id+'\')">공동 관리자 추가</button><button class="btn btn-ghost" onclick="transferOwnerV7(\''+e.id+'\')">소유권 이전</button><button class="btn btn-primary" onclick="submitCollabAssetV7(\''+e.id+'\')">최종 등록 신청</button></div>':'<div class="reader-note">관리 기능은 프로젝트 소유자와 공동 관리자에게만 표시됩니다.</div>')
+                  +'</div>';
+              }).join('')+'</div>';
+              h+='<div class="card widget" style="margin-top:14px"><div class="note" style="padding:2px"><b>권한 원칙</b> · 공개 공동 개발 화면에서는 프로젝트 탐색과 참여 신청만 제공하며, 구성원 권한 변경과 소유권 이전은 이 화면에서만 처리합니다.</div></div>';
+              return h;
+            }
+
+            const baseRenderMy=window.renderMy;
+            window.renderMy=function(mode){
+              mode=mode||'reader';
+              if(mode==='collab'){
+                const root=document.getElementById('screen-my');
+                if(!root)return;
+                root.innerHTML='<div class="asset-vault-head"><h2>🧩 내 자산함</h2><span class="pill">'+esc(collabActorName())+' · '+esc(collabActorDept())+'</span>'
+                  +'<button class="btn btn-ghost" style="margin-left:auto;padding:8px 13px" onclick="openScoreGuide()">🏅 기여 점수</button>'
+                  +collabTabs('collab')+'</div>'+collabManagementHTML();
+                applyPlatformTerminology(root);
+                return;
+              }
+              baseRenderMy(mode);
+              const tabs=document.querySelector('#screen-my .asset-vault-tabs');
+              if(tabs && !tabs.querySelector('[data-tab="collab"]')){
+                tabs.insertAdjacentHTML('beforeend','<button data-tab="collab" onclick="renderMyIn(\'collab\')">공동 개발 관리</button>');
+              }
+            };
+            window.renderMyIn=function(mode){ window.renderMy(mode); };
+
+            window.addCoManagerV7=function(id){
+              const e=ENSEMBLES.find(x=>x.id===id);if(!e)return;
+              if(!canManageCollab(e)){toast('관리 권한이 없습니다');return;}
+              const next=(e.members||[]).find(x=>x!==e.owner && !(e.coManagers||[]).includes(x));
+              if(!next){toast('추가할 수 있는 참여자가 없습니다');return;}
+              e.coManagers=e.coManagers||[];e.coManagers.push(next);
+              e.audit=e.audit||[];e.audit.unshift({at:'오늘',event:'공동 관리자 추가 · '+next,by:collabActorName()});
+              savePersistentStateV7(false);renderMy('collab');toast('✓ '+next+'님을 공동 관리자로 추가했습니다');
+            };
+            window.transferOwnerV7=function(id){
+              const e=ENSEMBLES.find(x=>x.id===id);if(!e)return;
+              if(!canManageCollab(e)){toast('관리 권한이 없습니다');return;}
+              const candidates=(e.members||[]).filter(x=>x!==e.owner);
+              const next=candidates[0];if(!next){toast('소유권을 이전할 참여자가 없습니다');return;}
+              const prev=e.owner;e.owner=next;e.coManagers=e.coManagers||[];
+              if(!e.coManagers.includes(prev))e.coManagers.push(prev);
+              e.audit=e.audit||[];e.audit.unshift({at:'오늘',event:'소유권 이전 '+prev+' → '+next,by:collabActorName()});
+              savePersistentStateV7(false);renderMy('collab');toast('↔ 프로젝트 소유권을 '+next+'님에게 이전했습니다');
+            };
+            window.submitCollabAssetV7=function(id){
+              const e=ENSEMBLES.find(x=>x.id===id);if(!e)return;
+              if(!canManageCollab(e)){toast('관리 권한이 없습니다');return;}
+              e.projectStatus='REVIEW';
+              if(!REVIEW_QUEUE.some(r=>r.collabId===id))REVIEW_QUEUE.push({id:'RC-C-'+Date.now(),collabId:id,title:e.title,author:e.owner+'(AI 공동 개발)',track:'HEAVY',reason:'공동 개발 AI 최종 등록',pre:{purpose:true,effect:true,sample:true},status:'OPEN',requiresTech:true});
+              e.audit=e.audit||[];e.audit.unshift({at:'오늘',event:'최종 등록 신청',by:collabActorName()});
+              savePersistentStateV7(false);renderMy('collab');toast('📨 공동 개발 AI가 심사 큐로 이동했습니다');
+            };
+          })();
+          </script>
+          '''
+              text = text.replace('</body>', patch + '\n</body>', 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('index.html').read_text(encoding='utf-8')
+          checks={
+            '홈 핫 스레드 삭제':'최근 AI 트렌드 핫 스레드' not in t,
+            '활용 리더 명칭':'이번 분기 AI 활용 리더 TOP 3' in t,
+            '공개 화면 관리영역 제거':"'+collabGovernanceHTMLV7());" not in t,
+            '내 자산함 공동개발 탭':'data-tab="collab"' in t,
+            '전용 패치':'collab-my-scope-patch' in t,
+          }
+          failed=[k for k,v in checks.items() if not v]
+          if failed:
+            raise SystemExit('검증 실패: '+', '.join(failed))
+          print('검증 완료:', ', '.join(checks))
+          PY
+
+      - name: Commit patched index
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "홈 활용 리더 및 공동 개발 권한 화면 정리"
+          git push origin HEAD:agent/home-and-collab-visibility
