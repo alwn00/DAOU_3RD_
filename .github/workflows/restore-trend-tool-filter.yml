@@ -1,0 +1,100 @@
+name: Apply trend and tool filter patch
+
+on:
+  push:
+    branches:
+      - agent/restore-trend-and-tool-filter
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/restore-trend-and-tool-filter
+      - name: Patch index.html
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = []
+
+          replacements.append((
+          "state.assetQuery=state.assetQuery||'';\n\nfunction assetCatalogV8(){",
+          "state.assetQuery=state.assetQuery||'';\nstate.assetTool=state.assetTool||'all';\n\nfunction assetCatalogV8(){"
+          ))
+
+          replacements.append((
+          "  if(q){\n    list=list.filter(a=>\n      (a.title||'').toLowerCase().includes(q)||\n      (a.purpose||'').toLowerCase().includes(q)||\n      (a.author||'').toLowerCase().includes(q)||\n      (a.dept||'').toLowerCase().includes(q)||\n      (a.tags||[]).join(' ').toLowerCase().includes(q)||\n      (a.cat||'').toLowerCase().includes(q)\n    );\n  }\n  return list;",
+          "  if(q){\n    list=list.filter(a=>\n      (a.title||'').toLowerCase().includes(q)||\n      (a.purpose||'').toLowerCase().includes(q)||\n      (a.author||'').toLowerCase().includes(q)||\n      (a.dept||'').toLowerCase().includes(q)||\n      (a.tags||[]).join(' ').toLowerCase().includes(q)||\n      (a.cat||'').toLowerCase().includes(q)\n    );\n  }\n  const tool=state.assetTool||'all';\n  if(tool!=='all'){\n    list=list.filter(a=>{\n      if(tool==='WEBAPP') return !!a.runtimeUrl || a.type==='space' || a.tool==='webapp' || (a.tags||[]).some(t=>/웹앱|Artifact|MCP|자동화/.test(t));\n      return a.pf===tool;\n    });\n  }\n  return list;"
+          ))
+
+          replacements.append((
+          "function setAssetQueryV8(v){\n  state.assetQuery=v;\n  renderAssetsV8();\n  savePersistentStateV7(false);\n}\nfunction renderAssetsV8(){",
+          "function setAssetQueryV8(v){\n  state.assetQuery=v;\n  renderAssetsV8();\n  savePersistentStateV7(false);\n}\nfunction setAssetToolV8(tool){\n  state.assetTool=tool;\n  renderAssetsV8();\n  savePersistentStateV7(false);\n}\nfunction renderAssetsV8(){"
+          ))
+
+          replacements.append((
+          "    +'<div class=\"discovery-tabs\">'\n    +[['all','전체'],['dept','우리 부서 인기'],['popular','전사 인기'],['recent','최신'],['verified','검증 완료'],['education','교육']]\n      .map(x=>'<button class=\"'+(tab===x[0]?'active':'')+'\" onclick=\"setDiscoveryTabV8(\\''+x[0]+'\\')\">'+x[1]+'</button>').join('')\n    +'</div>'\n    +'<div class=\"asset-catalog-count\">'+list.length+'개 자산</div>'",
+          "    +'<div class=\"discovery-tabs\">'\n    +[['all','전체'],['dept','우리 부서 인기'],['popular','전사 인기'],['recent','최신'],['verified','검증 완료'],['education','교육']]\n      .map(x=>'<button class=\"'+(tab===x[0]?'active':'')+'\" onclick=\"setDiscoveryTabV8(\\''+x[0]+'\\')\">'+x[1]+'</button>').join('')\n    +'</div>'\n    +'<div class=\"discovery-tabs\" style=\"margin-top:10px\"><span style=\"align-self:center;font-size:.82rem;font-weight:800;color:var(--ink-soft);margin-right:4px\">툴별 보기</span>'\n    +[['all','전체 툴'],['GEMINI','Gemini'],['COPILOT','Copilot'],['CLAUDE','Claude'],['WEBAPP','웹앱·실행형']]\n      .map(x=>'<button class=\"'+((state.assetTool||'all')===x[0]?'active':'')+'\" onclick=\"setAssetToolV8(\\''+x[0]+'\\')\">'+x[1]+'</button>').join('')\n    +'</div>'\n    +'<div class=\"asset-catalog-count\">'+list.length+'개 자산</div>'"
+          ))
+
+          replacements.append((
+          "  const deptAssets=deptPopular(dept).slice(0,4);\n  const collabs=collaborationRequestsV9();",
+          "  const deptAssets=deptPopular(dept).slice(0,4);\n  const radar=hot트렌드PostsV9();\n  const collabs=collaborationRequestsV9();"
+          ))
+
+          old_home = """    +'<section class=\"home-section keep-metaphor\"><div class=\"home-section-head\"><h3>👑 이번 분기 AI 활용 리더 TOP 3</h3><button onclick=\"nav(\\'my\\')\">내 활동 →</button></div>'
+    +'<div class=\"card home-panel\"><div class=\"reader-top3\">'+TOP_READERS.slice(0,3).map((r,i)=>'<div class=\"reader-rank-card r'+(i+1)+'\">'
+      +'<div class=\"rr-rank\">'+(i+1)+'</div><div><div class=\"rr-name\">'+esc(r.name)+'</div><div class=\"rr-dept\">'+esc(readerDeptV9(r.name))+'</div></div>'
+      +'<div class=\"rr-count\">'+r.cnt+'개 활용</div></div>').join('')+'</div>'
+      +'<div class=\"reader-note\">AI 자산 가져오기·실행·재사용 활동 기준이며 인사평가·기여 점수와 연결하지 않습니다.</div></div></section>'"""
+
+          new_home = """    +'<div class=\"home-two-col\">'
+    +'<section class=\"home-section\"><div class=\"home-section-head\"><h3>🔥 최근 AI 트렌드</h3><button onclick=\"nav(\\'radar\\')\">전체 보기 →</button></div>'
+    +'<div class=\"card home-panel\">'+radar.map(p=>'<div class=\"hot-radar-row\" onclick=\"nav(\\'radar\\')\">'
+      +'<div class=\"hr-top\"><div class=\"hr-title\">'+esc(p.title)+'</div>'
+      +(p.verified?'<span class=\"status-chip verified\">AX 검증</span>':'')
+      +(p.poc?'<span class=\"status-chip poc\">PoC 후보</span>':'')
+      +'<span class=\"hr-score\">HOT '+hot트렌드ScoreV9(p)+'</span></div>'
+      +'<div class=\"hr-meta\">'+esc(p.by)+' · 댓글 '+(p.commentList||[]).length+' · 수정 제안 '+(p.suggestions||[]).length+'</div>'
+      +'<div class=\"hr-body\">'+esc(p.body)+'</div></div>').join('')+'</div></section>'
+    +'<section class=\"home-section keep-metaphor\"><div class=\"home-section-head\"><h3>👑 이번 분기 AI 활용 리더 TOP 3</h3><button onclick=\"nav(\\'my\\')\">내 활동 →</button></div>'
+    +'<div class=\"card home-panel\"><div class=\"reader-top3\">'+TOP_READERS.slice(0,3).map((r,i)=>'<div class=\"reader-rank-card r'+(i+1)+'\">'
+      +'<div class=\"rr-rank\">'+(i+1)+'</div><div><div class=\"rr-name\">'+esc(r.name)+'</div><div class=\"rr-dept\">'+esc(readerDeptV9(r.name))+'</div></div>'
+      +'<div class=\"rr-count\">'+r.cnt+'개 활용</div></div>').join('')+'</div>'
+      +'<div class=\"reader-note\">AI 자산 가져오기·실행·재사용 활동 기준이며 인사평가·기여 점수와 연결하지 않습니다.</div></div></section>'
+    +'</div>'"""
+          replacements.append((old_home, new_home))
+
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit('Expected snippet not found:\n' + old[:240])
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script[^>]*>(.*?)</script>',html,re.S)
+          Path('/tmp/check.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/check.js
+      - name: Commit patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "fix: restore AI trend section and add tool filters" || exit 0
+          git push
