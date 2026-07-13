@@ -1,0 +1,13 @@
+# Python
+backend/.venv/
+**/__pycache__/
+*.pyc
+
+# 로컬 DB / 로그 (시연마다 재생성)
+*.db
+*.sqlite3
+*.log
+
+# OS
+Thumbs.db
+.DS_Store

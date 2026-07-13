@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py --version)",
+      "PowerShell(python --version; Write-Output \"---\"; \\(Get-Command python -ErrorAction SilentlyContinue\\).Source; Write-Output \"---pip---\"; python -m pip --version)",
+      "PowerShell(& python -c \"print\\(1+1\\)\" 2>&1 | Out-String; Write-Output \"EXIT=$LASTEXITCODE\")",
+      "PowerShell(winget install --id Python.Python.3.12 -e --source winget --accept-package-agreements --accept-source-agreements --silent 2>&1 | Select-Object -Last 20; Write-Output \"EXIT=$LASTEXITCODE\")",
+      "PowerShell($py = \"$env:LOCALAPPDATA\\\\Programs\\\\Python\\\\Python312\\\\python.exe\"; if \\(Test-Path $py\\) { & $py --version } else { Write-Output \"not at expected path; searching\"; Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\\\\Python\" -Directory -ErrorAction SilentlyContinue | Select-Object FullName })",
+      "Bash(grep -n \"^const \\\\|^let \\\\|^var \\\\|^function \\\\|^  function \\\\|=> *{$\\\\|const DB\\\\|const state\\\\|MOCK\\\\|mock\" index.html)",
+      "Bash(find \"C:/Users/intern02/Desktop\" \"C:/Users/intern02/AppData/Local/Temp\" \"C:/Users/intern02/Downloads\" -iname \"*260713*\" -o -iname \"*프론트 수정*\" 2>/dev/null | head -40)"
+    ]
+  }
+}
