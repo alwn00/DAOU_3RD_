@@ -1,0 +1,66 @@
+name: Finalize UI scope
+
+on:
+  push:
+    branches:
+      - agent/home-and-collab-visibility
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/home-and-collab-visibility
+
+      - name: Finalize terminology
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          t=p.read_text(encoding='utf-8')
+          t=t.replace('다독왕','AI 활용 리더')
+          p.write_text(t,encoding='utf-8')
+          PY
+
+      - name: Validate HTML scripts and scope
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          t=Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script[^>]*>(.*?)</script>',t,re.S)
+          if not scripts:
+            raise SystemExit('script 태그를 찾지 못했습니다')
+          out=Path('/tmp/js-check');out.mkdir(exist_ok=True)
+          for i,s in enumerate(scripts):
+            (out/f'script-{i}.js').write_text(s,encoding='utf-8')
+          checks={
+            '핫 스레드 홈 문구 제거':'최근 AI 트렌드 핫 스레드' not in t,
+            '활용 리더 TOP 3':'이번 분기 AI 활용 리더 TOP 3' in t,
+            '기존 명칭 제거':'다독왕' not in t,
+            '공개 공동개발 관리 호출 제거':"'+collabGovernanceHTMLV7());" not in t,
+            '개인 공동개발 관리 탭':'data-tab="collab"' in t,
+          }
+          failed=[k for k,v in checks.items() if not v]
+          if failed: raise SystemExit('검증 실패: '+', '.join(failed))
+          print('문자열 검증 완료')
+          PY
+          for f in /tmp/js-check/*.js; do node --check "$f"; done
+
+      - name: Commit finalized index
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "AI 활용 리더 용어 정리 및 스크립트 검증"
+          git push origin HEAD:agent/home-and-collab-visibility
