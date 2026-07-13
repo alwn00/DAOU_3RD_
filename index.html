@@ -995,6 +995,23 @@ body.xray-on main{padding-bottom:90px!important}
 .ck.ok{background:var(--green,#1f8a4c);color:#fff}
 .ck.no{background:var(--red-tint);color:var(--red);border:1px solid var(--red)}
 .cv8-hint{font-size:.78rem;color:var(--ink-faint);margin-top:8px;line-height:1.6}
+/* ---- 라이선스 적합성 확인 (V12) ---- */
+.lic-check{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 0}
+.lic-check .lc-row{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:.9rem}
+.lic-check .lc-row:last-child{border-bottom:none}
+.lic-check .lc-k{color:var(--ink-soft);font-weight:700}
+.lic-check .lc-v{font-weight:800}
+.lic-check .lc-v.ok{color:var(--green,#1f8a4c)}
+.lic-check .lc-v.warn{color:#9b6f0c}
+.lic-compat-list{display:flex;flex-direction:column;gap:8px;margin:12px 0;max-height:320px;overflow-y:auto}
+.lic-compat-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
+.lic-compat-row:hover{border-color:var(--gw-blue);background:var(--paper-deep)}
+.lic-branch-list{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.lic-branch{border:1px solid var(--line);border-radius:9px;padding:12px 14px;font-size:.88rem}
+.lic-branch.ok{border-color:#2f5bd0;background:#f7faff}
+.lic-branch .lb-tag{display:inline-block;font-size:.72rem;font-weight:800;color:#2f5bd0;margin-bottom:4px}
+.lic-branch .lb-sub{font-size:.8rem;color:var(--ink-soft);line-height:1.6}
+.lic-fit{display:flex;flex-direction:column;gap:4px;margin:12px 0}
 .pipe-actions{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
 .status-failed{background:var(--red-tint);color:var(--red);font-weight:800;padding:4px 8px;border-radius:4px;font-size:.76rem}
 .status-rolled{background:var(--gold-tint);color:#9b6f0c;font-weight:800;padding:4px 8px;border-radius:4px;font-size:.76rem}
@@ -2162,17 +2179,12 @@ function closeModal(){
   document.getElementById('modal-root').classList.remove('visible');
 }
 
-/* ---- 습득 뱃지 → 어항 물고기 (소비 측 보상 — 점수 아님) ---- */
+/* ---- 습득 이력 기록 (은유·보상 표현 제거 — 활동 기록만 남김) ---- */
 function earnBadge(key){
   const b = state.badges[key];
   if(!b || b.earned) return false;
   b.earned = true;
-  const kindLabel = (b.kind==='author') ? '제작자 마일스톤' : '다독 마일스톤';
-  xlog('<span class="tbl">SCORE_LEDGER</span> append (+0, BADGE_EARNED:'+key+') — 점수 0이지만 기록은 남음 <span class="arr">→</span> 마일스톤 진열장 갱신 <span class="arr">→</span> 내 어항에 물고기 1마리 추가 (프론트 표현 계층)');
-  toast('<span style="font-size:1.4rem">'+b.fish+'</span> '+kindLabel+' <b>「'+b.nm+'」</b> 획득!<br><small>내 자산함 「내 어항」에 물고기가 들어왔어요</small>');
-  // 내 내 활동 어항이 열려 있으면 즉시 입수 연출
-  const aq = document.getElementById('aquarium');
-  if(aq) addFishToTank(aq, b, true);
+  xlog('<span class="tbl">SCORE_LEDGER</span> append (+0, ACTIVITY_LOGGED:'+key+') — 점수 0이지만 활동 기록으로 남습니다');
   return true;
 }
 function fishStyle(i){
@@ -2552,13 +2564,110 @@ function confirmAdopt(id){
   openModal(
     '<div class="done-anim"><span class="bookfly">📖</span>'
     + '<h3>내 자산함에 추가됐어요!</h3>'
-    + '<div class="sub">'+esc(a.title)+' — '+ME.dept+' · '+tone+' 설정 사본 생성 완료<br>제작자 '+esc(nick(a.author))+'님에게 <b style="color:var(--green)">+1점</b>이 적립됐어요 (나는 다독왕 집계만 📚)</div></div>'
+    + '<div class="sub">'+esc(a.title)+' — '+ME.dept+' · '+tone+' 설정 사본 생성 완료<br>제작자 '+esc(nick(a.author))+'님에게 <b style="color:var(--green)">+1점</b>이 적립됐어요 (가져가기는 제작자 기여로만 기록)</div></div>'
     + '<div class="modal-actions"><button class="btn btn-primary" onclick="closeModal();nav(\'my\')">🏠 내 자산함 보러 가기</button>'
     + '<button class="btn btn-ghost" onclick="closeModal()">계속 둘러보기</button></div>'
   );
-  toast('📖 가져가기 완료! 제작자에게 +1점 — <b>소비는 점수 없음</b>, 다독왕 집계만', 'score');
+  toast('📖 가져가기 완료! 제작자에게 +1점 — <b>가져가기 자체는 점수 없음</b>, 활동 기록만', 'score');
   earnBadge('firstAdopt');
 }
+
+/* ============================================================
+   AI 도구·라이선스 적합성 확인 (V12)
+   가져가기 전, 자산이 요구하는 AI 도구·등급을 내 보유 환경과 비교하고
+   현재 환경 사용 / 호환 자산 추천 / 라이선스 신청(Works·전자결재)으로 분기
+   ============================================================ */
+function isDevRoleV12(){ return /개발|AX개발|SW|엔지니어/.test((ME.dept||'')+' '+(ME.role||'')); }
+function myLicensesV12(){
+  const base=['Gemini'];                         // 전사 기본 제공
+  if(isDevRoleV12()) base.push('Claude Code(Standard)','Copilot');
+  return base;
+}
+function requiredToolV12(a){
+  if(a.pf==='CLAUDE'){
+    const devUse = a.cat==='개발' || a.assetKind==='AUTOMATION' || a.assetKind==='AGENT'
+      || /코드|개발|자동화|스크립트|리뷰|SQL/.test((a.title||'')+(a.purpose||'')+((a.tags||[]).join('')));
+    return devUse ? {tool:'Claude Code', grade:'Standard 이상'} : {tool:'Claude', grade:'기본'};
+  }
+  if(a.pf==='COPILOT') return {tool:'Copilot', grade:'기본'};
+  return {tool:'Gemini', grade:'기본'};
+}
+function licenseCheckV12(a){
+  const req=requiredToolV12(a);
+  const have=myLicensesV12();
+  const ok=have.some(l=>l.split('(')[0]===req.tool.split('(')[0]);
+  return {req, have, ok};
+}
+function openLicenseGateV12(id){
+  const a=byId(id); if(!a) return;
+  const {req, have, ok}=licenseCheckV12(a);
+  openModal(
+    '<h3>🔑 내 AI 사용 환경 확인</h3>'
+    +'<div class="desc">'+esc(a.title)+'을(를) 가져가기 전에, 이 자산이 요구하는 AI 도구·라이선스를 내 보유 환경과 비교합니다.</div>'
+    +'<div class="lic-check">'
+    +'<div class="lc-row"><span class="lc-k">필요 도구</span><span class="lc-v">'+esc(req.tool)+'</span></div>'
+    +'<div class="lc-row"><span class="lc-k">필요 등급</span><span class="lc-v">'+esc(req.grade)+'</span></div>'
+    +'<div class="lc-row"><span class="lc-k">현재 보유</span><span class="lc-v">'+esc(have.join(', '))+'</span></div>'
+    +'<div class="lc-row"><span class="lc-k">상태</span><span class="lc-v '+(ok?'ok':'warn')+'">'+(ok?'✅ 사용 가능':'⚠ 추가 신청 필요')+'</span></div>'
+    +'</div>'
+    + (ok
+      ? '<div class="modal-actions"><button class="btn btn-primary btn-big" onclick="openAdopt('+id+',true)">현재 환경에서 사용 · 가져가기</button><button class="btn btn-ghost" onclick="closeModal()">취소</button></div>'
+      : '<div class="modal-actions" style="flex-wrap:wrap"><button class="btn btn-secondary" onclick="openAdopt('+id+',true)">현재 환경에서 사용</button>'
+        +'<button class="btn btn-secondary" onclick="showCompatibleAssetsV12('+id+')">호환 자산 보기</button>'
+        +'<button class="btn btn-primary" onclick="openLicenseRequestV12('+id+')">라이선스 신청 확인</button></div>')
+  );
+  xlog('🔑 라이선스 적합성 확인 — 필요='+req.tool+'('+req.grade+') · 보유=['+have.join(', ')+'] · 상태='+(ok?'사용 가능':'추가 신청 필요'));
+}
+function showCompatibleAssetsV12(id){
+  const list=ASSETS.filter(a=>a.id!==id && licenseCheckV12(a).ok).slice(0,8);
+  openModal('<h3>🔄 내 환경에서 바로 쓸 수 있는 호환 자산</h3>'
+    +'<div class="desc">현재 보유 라이선스(<b>'+esc(myLicensesV12().join(', '))+'</b>)로 추가 신청 없이 사용할 수 있는 자산입니다.</div>'
+    +'<div class="lic-compat-list">'+(list.length?list.map(a=>'<div class="lic-compat-row" onclick="closeModal();nav(\'detail\','+a.id+')"><span style="font-size:1.2rem">'+a.icon+'</span><div><div style="font-weight:800">'+esc(a.title)+'</div><div style="font-size:.78rem;color:var(--ink-soft)">'+PF[a.pf].label+' · '+esc(a.cat)+'</div></div><span class="pill" style="margin-left:auto">바로 사용</span></div>').join(''):'<div class="hint">호환 자산이 없습니다.</div>')+'</div>'
+    +'<div class="modal-actions"><button class="btn btn-ghost" onclick="openLicenseGateV12('+id+')">← 뒤로</button></div>');
+}
+function openLicenseRequestV12(id){
+  const a=byId(id); const {req}=licenseCheckV12(a);
+  if(req.tool==='Claude Code'){ openClaudeCodeFlowV12(id); return; }
+  openModal('<h3>🪪 '+esc(req.tool)+' 라이선스 신청</h3><div class="desc">'+esc(req.tool)+' '+esc(req.grade)+' 사용 권한을 신청합니다.</div>'
+   +'<div class="lic-branch"><b>신청 경로</b><br><span class="lb-sub">전자결재 → 부서장 승인 → IT 자산팀 라이선스 발급</span></div>'
+   +'<div class="modal-actions"><button class="btn btn-primary" onclick="closeModal();toast(\'🪪 '+esc(req.tool)+' 라이선스 신청서를 전자결재로 상신했습니다 (목업)\')">전자결재 상신</button><button class="btn btn-ghost" onclick="openLicenseGateV12('+id+')">← 뒤로</button></div>');
+}
+function openClaudeCodeFlowV12(id){
+  const dev=isDevRoleV12();
+  let h='<h3>🟠 Claude Code 사용 경로 안내</h3><div class="desc">Claude Code는 직무·용도에 따라 신청 경로가 다릅니다. 내 상황에 맞는 경로를 선택하세요.</div><div class="lic-branch-list">';
+  if(dev){
+    h+='<div class="lic-branch ok"><div class="lb-tag">✅ 내 직무</div><b>SW개발 직무 → Works 즉시 신청</b><br><span class="lb-sub">개발 직군은 별도 결재 없이 Works 포털에서 Claude Code Standard를 신청·발급받습니다.</span>'
+      +'<button class="btn btn-primary" style="margin-top:8px" onclick="closeModal();toast(\'🟠 Works에서 Claude Code Standard 신청을 접수했습니다 (목업)\')">Works에서 신청</button></div>';
+  } else {
+    h+='<div class="lic-branch ok"><div class="lb-tag">✅ 내 직무</div><b>SW개발 외 직무 → 적합성 확인 후 전자결재</b><br><span class="lb-sub">비개발 직무는 사용 적합성(코드 산출물·자동화 필요성)을 확인한 뒤 전자결재로 신청합니다.</span>'
+      +'<button class="btn btn-secondary" style="margin-top:8px" onclick="claudeCodeFitCheckV12('+id+')">적합성 확인 시작</button></div>';
+    h+='<div class="lic-branch"><b>일반 문서·요약·기획 목적 → Gemini 추천</b><br><span class="lb-sub">문서 작성·요약·기획 용도라면 이미 보유한 Gemini로 충분합니다. 추가 신청이 필요 없습니다.</span>'
+      +'<button class="btn btn-ghost" style="margin-top:8px" onclick="showCompatibleAssetsV12('+id+')">Gemini 호환 자산 보기</button></div>';
+  }
+  h+='<div class="lic-branch"><b>Standard 사용 1개월 후 Premium 필요 → 업그레이드 전자결재</b><br><span class="lb-sub">Standard를 1개월 이상 사용하고 Premium 기능이 필요하면 업그레이드를 전자결재로 신청합니다.</span>'
+    +'<button class="btn btn-ghost" style="margin-top:8px" onclick="closeModal();toast(\'⬆ Claude Code Premium 업그레이드를 전자결재로 상신했습니다 (목업)\')">업그레이드 전자결재</button></div>';
+  h+='</div><div class="modal-actions"><button class="btn btn-ghost" onclick="openLicenseGateV12('+id+')">← 뒤로</button></div>';
+  openModal(h);
+}
+function claudeCodeFitCheckV12(id){
+  openModal('<h3>🧭 Claude Code 적합성 확인</h3><div class="desc">아래 항목에 해당할수록 Claude Code 전자결재 신청 대상입니다.</div>'
+   +'<div class="lic-fit"><label class="check-row"><input type="checkbox" id="cc-fit1"> 코드·스크립트 산출물을 직접 만든다</label>'
+   +'<label class="check-row"><input type="checkbox" id="cc-fit2"> Gemini로 대체하기 어려운 자동화·개발 작업이다</label>'
+   +'<label class="check-row"><input type="checkbox" id="cc-fit3"> 반복적인 개발 업무에 월 단위로 사용한다</label></div>'
+   +'<div class="modal-actions"><button class="btn btn-primary" onclick="submitClaudeCodeFitV12('+id+')">판정 · 전자결재</button><button class="btn btn-ghost" onclick="openClaudeCodeFlowV12('+id+')">← 뒤로</button></div>');
+}
+function submitClaudeCodeFitV12(id){
+  const n=['cc-fit1','cc-fit2','cc-fit3'].filter(k=>{const el=document.getElementById(k);return el&&el.checked;}).length;
+  closeModal();
+  if(n>=2){ toast('🟠 적합성 '+n+'/3 — Claude Code 사용이 적합합니다. 전자결재를 상신했습니다 (목업)'); }
+  else { toast('💎 문서·요약·기획 용도로 판단됩니다 — 보유한 Gemini 자산을 추천합니다'); setTimeout(()=>showCompatibleAssetsV12(id),350); }
+}
+/* 가져가기 진입점을 라이선스 게이트로 래핑 (skipLicense=true면 실제 가져가기) */
+const _openAdoptCoreV12 = openAdopt;
+openAdopt = function(id, skipLicense){
+  if(skipLicense){ return _openAdoptCoreV12(id); }
+  openLicenseGateV12(id);
+};
 
 /* ============================================================
    ②-b 따라 만들기 — 소비→학습→공급 사이의 학습 사다리
@@ -2849,8 +2958,10 @@ function renderMy(mode){
     + '<div class="role-toggle">'
     + '<button class="'+(mode==='reader'?'active':'')+'" onclick="renderMyIn(\'reader\')">📖 가져온 자산 (사용자)</button>'
     + '<button class="'+(mode==='creator'?'active':'')+'" onclick="renderMyIn(\'creator\')">📕 내가 만든 자산 (제작자)</button></div></div>';
-  /* [고도화 4] 상단 점수 마일스톤 링 (공통 — 캐시워크식) */
-  h += '<div id="ms-ring-host">'+milestoneRing(totalPts)+'</div>';
+  /* 누적 기여 점수 요약 (보상·마일스톤 표현 제거 — 활동 기록만) */
+  h += '<div class="card widget" style="margin-top:14px"><h4>🏅 누적 기여 점수 <small style="font-weight:400;color:var(--ink-faint)">— 조직 자산에 기여한 활동 기록</small></h4>'
+    + '<div style="font-size:1.4rem;font-weight:900;color:var(--gw-blue)">'+totalPts+'점</div>'
+    + '<div class="note">등록·요청 해결·동료 활용 등 <b>공급 활동</b>만 가점 · 가져가기·사용은 0점(활동 기록) · 인사평가와 무관</div></div>';
   if(mode==='reader'){
     /* [고도화 1] 모던 자산 보관함(MZ) — 그라데이션 이모지 커버 카드 */
     h += '<div class="section-title" style="margin-top:24px">📚 내 자산 보관함 <small>가져온 자산 '+state.myShelf.length+'개 — 표지를 누르면 자산으로</small></div>';
@@ -2868,11 +2979,8 @@ function renderMy(mode){
       h += '<div class="mzempty"><span class="il">📚</span><div class="t">첫 자산을 가져와 보세요 📚</div><div class="s">AI 자산에서 마음에 드는 자산을 <b>[가져가기]</b> 하면 내 자산함에 자산 카드가 추가됩니다</div><button class="btn btn-primary" onclick="nav(\'home\')">🔍 AI 자산 둘러보기</button></div>';
     }
     /* [고도화 2] 활동 캘린더 */
-    h += '<div class="section-title" style="margin-top:26px">🗓 활동 캘린더 <small>그날 가져오거나 사용한 자산 — 교보문고 활동 달력처럼</small></div>'
+    h += '<div class="section-title" style="margin-top:26px">🗓 활동 캘린더 <small>그날 가져오거나 사용한 자산</small></div>'
       + '<div id="cal-host">'+renderCalendar()+'</div>';
-    /* 다독왕 진행 (유지) */
-    h += '<div class="card widget" style="margin-top:14px"><h4>👑 다독왕 진행</h4><div style="font-size:.95rem">이번 분기 나의 가져가기 <b>'+(19+state.myShelf.length)+'개</b> — 다독왕 컷(25개 [가정])까지 <b style="color:var(--green)">'+Math.max(0,25-(19+state.myShelf.length))+'개</b> 남았어요 <small style="color:var(--ink-faint)">(순위표 전체는 보여주지 않아요 — 나와 컷의 거리만)</small></div>'
-      + '<div class="note">다독왕은 점수가 아닙니다 — "의미 없지만 기분 좋은" 명예 랭킹 · 분기 리셋</div></div>';
   } else {
     h += '<div class="dash-grid" style="margin-top:22px">'
       + '<div class="stat-card card"><div class="lb">누적 점수 (원장 합계)</div><div class="val">'+totalPts+'점</div><div class="sub">SCORE_LEDGER 파생값 — 깎이는 이벤트 없음</div></div>'
@@ -2905,21 +3013,6 @@ function renderMy(mode){
     + '<div class="card commitlog" style="margin-top:14px">'
     + [...state.ledger].reverse().map(l=>'<div class="commit'+(l.pts===0?' zero':'')+'"><div class="cdot">'+l.ic+'</div><div class="cbody"><div class="cmsg">'+esc(l.msg)+'</div><div class="cmeta">'+esc(l.d)+' · '+esc(l.ev)+'</div></div><div class="cscore '+(l.pts>0?'plus':'zero')+'">'+(l.pts>0?'+'+l.pts:'±0')+'</div></div>').join('')
     + '<div style="padding:10px 18px;font-size:.8rem;color:var(--ink-faint)">append-only 원장(SCORE_LEDGER) — 점수 0인 이벤트도 기록됩니다 · 본인 것만 조회 가능(타인 점수 조회 API 없음)</div></div>';
-  /* --- 공통: 내 어항 (마일스톤 물고기 — 제작자/다독 구분) --- */
-  const earned = Object.entries(state.badges).filter(([k,b])=>b.earned);
-  const readN = earned.filter(([k,b])=>b.kind!=='author').length;
-  const authorN = earned.filter(([k,b])=>b.kind==='author').length;
-  const kindTag = b => b.kind==='author'
-    ? '<span style="font-size:.68rem;font-weight:700;color:var(--gold);background:var(--gold-tint);border-radius:4px;padding:1px 7px">제작자</span>'
-    : '<span style="font-size:.68rem;font-weight:700;color:var(--gw-blue);background:var(--gw-blue-tint);border-radius:4px;padding:1px 7px">다독</span>';
-  h += '<div class="section-title">🐠 내 어항 <small>마일스톤 물고기 — 좋은 행동이 남는 기록 · 등급·순위·굶음 없음</small></div>'
-    + '<div class="aquarium-wrap"><div class="aquarium" id="aquarium">'
-    + '<div class="weed" style="left:8%">🌿</div><div class="weed" style="left:46%;animation-delay:-2s">🪸</div><div class="weed" style="left:82%;animation-delay:-1s">🌿</div>'
-    + [12,30,55,74,90].map((x,i)=>'<div class="bubble" style="left:'+x+'%;animation-delay:-'+(i*1.4)+'s"></div>').join('')
-    + earned.map(([k,b],i)=>'<div class="fish" style="'+fishStyle(i)+'" title="'+(b.kind==='author'?'제작자':'다독')+' 물고기 · '+esc(b.nm)+'"><span class="f-inner">'+b.fish+'</span></div>').join('')
-    + '<div class="sand"></div></div>'
-    + '<div class="aq-caption"><span class="pill">물고기 '+earned.length+'마리</span><span class="pill">🐠 다독 '+readN+' · 🐳 제작자 '+authorN+'</span><span class="pill">교환·평가 불가 — 기록일 뿐</span></div>'
-    + '<div class="badge-list">'+Object.entries(state.badges).map(([k,b])=>'<div class="badge-card'+(b.earned?' earned':'')+'"><span class="bic">'+b.fish+'</span><div><div class="bnm">'+esc(b.nm)+' '+kindTag(b)+'</div><div class="bds">'+esc(b.ds)+'</div></div></div>').join('')+'</div></div>';
   document.getElementById('screen-my').innerHTML = h;
   animateRing();
   animateHbars();
@@ -2969,10 +3062,9 @@ function animateHbars(){ requestAnimationFrame(()=>{ document.querySelectorAll('
 /* 점수 적립 시 호출 — 누적 재계산 → 마일스톤 판정 → 링 실시간 갱신 */
 function onScore(){
   const total = state.ledger.reduce((s,l)=>s+l.pts,0);
-  xlog('<span class="tbl">SCORE_LEDGER</span> 누적 합계 재계산 = <b>'+total+'점</b> <span class="arr">→</span> 분기 100점 마일스톤 판정');
+  xlog('<span class="tbl">SCORE_LEDGER</span> 누적 합계 재계산 = <b>'+total+'점</b> (활동 기록)');
   MILESTONES.forEach(([th,key])=>{
     if(total>=th && state.badges[key] && !state.badges[key].earned){
-      xlog('마일스톤 <b>'+th+'점</b> 도달 — 보상 지급: 어항 물고기 🐋 + 뱃지');
       earnBadge(key);
     }
   });
@@ -2990,13 +3082,13 @@ function openScoreGuide(){
     + '<tr><td>🧩 AI 자산 등록·공개</td><td class="pts plus">+3</td><td>자동 또는 수동 심사를 통과해 공개된 경우</td></tr>'
     + '<tr><td>🤝 AI 제작 요청 해결</td><td class="pts plus">+3</td><td>현업 요청을 실제 사용 가능한 자산으로 완성한 경우 · AI 공동 개발 시 기여자에게 배분</td></tr>'
     + '<tr><td>📈 내 자산이 동료 업무에 활용됨</td><td class="pts plus">+1</td><td>자기 사용·동일 사용자의 반복 실행 제외 · 분기 보너스 상한 적용</td></tr>'
-    + '<tr><td>📥 자산 가져오기 · 실행 · 사용 후기</td><td class="pts zero">0</td><td>다독왕과 개인 활동 기록에만 반영</td></tr>'
+    + '<tr><td>📥 자산 가져오기 · 실행 · 사용 후기</td><td class="pts zero">0</td><td>개인 활동 기록에만 반영</td></tr>'
     + '<tr><td>❤️ 공감 · 추천</td><td class="pts zero">0</td><td>인기와 탐색을 위한 신호로만 사용</td></tr>'
-    + '<tr class="milestone"><td>🐉 100점 마일스톤</td><td class="pts plus">보상</td><td>분기별 합계가 100점 이상일 경우, 보상 지급</td></tr>'
     + '</tbody></table>'
+    + '<div class="hint" style="margin-top:10px">기여 점수는 조직 자산에 기여한 활동의 누적 기록일 뿐, 등급·보상·인사평가와 연결되지 않습니다.</div>'
     + '<div class="modal-actions" style="margin-top:18px"><button class="btn btn-ghost" onclick="closeModal()">닫기</button></div>'
   );
-  xlog('기여 점수 정책 조회 — 승인된 공급 활동만 가점 · 사용 활동 0점 · 분기 100점 보상');
+  xlog('기여 점수 정책 조회 — 승인된 공급 활동만 가점 · 사용 활동 0점');
 }
 
 /* [고도화 2] 활동 캘린더 — 날짜별 미니 커버(이모지+색 칩)+별점 (2개월 더미) */
@@ -4284,6 +4376,11 @@ const COLLAB_STATUS = {
   OWNER_INACTIVE:{label:'소유자 비활성', cls:'st-inactive'},
   AX_TEMP:{label:'AX기획팀 임시 관리', cls:'st-temp'}
 };
+/* 영어 내부 상태값 → 사용자 화면용 한글 라벨 (#11) */
+function projectStatusKoV8(s){
+  const extra={COMPLETED:'완료', TRANSFER_REQUIRED:'소유권 인계 필요', RECRUITING:'참여자 모집', REVIEW:'등록 검토 중'};
+  return extra[s] || (COLLAB_STATUS[s]&&COLLAB_STATUS[s].label) || s;
+}
 /* 인사(HR) 상태 — 퇴사 예정/비활성 감지용 목업 디렉터리 */
 const HR_DIRECTORY = {
   '박서연':{dept:'인사팀', status:'ACTIVE', mgr:'인사팀장'},
@@ -5160,28 +5257,20 @@ renderHome=function(){
     +'<button onclick="state.discoveryTab=\'dept\';nav(\'assets\')">전체 보기 →</button></div>'
     +'<div class="card home-panel">'+(deptAssets.length?dashboardAssetRowsV8(deptAssets):'<div class="asset-empty">아직 부서 활용 기록이 없습니다.</div>')+'</div></section>'
 
-    +'<div class="home-two-col">'
-    +'<section class="home-section"><div class="home-section-head"><h3>🔥 최근 AI 트렌드 핫 스레드</h3><button onclick="nav(\'radar\')">전체 보기 →</button></div>'
+    +'<section class="home-section"><div class="home-section-head"><h3>🔥 주목받는 AI 이야기</h3><button onclick="nav(\'radar\')">전체 보기 →</button></div>'
     +'<div class="card home-panel">'+radar.map(p=>'<div class="hot-radar-row" onclick="nav(\'radar\')">'
       +'<div class="hr-top"><div class="hr-title">'+esc(p.title)+'</div>'
-      +(p.verified?'<span class="status-chip verified">AX 검증</span>':'')
+      +(p.verified?'<span class="status-chip verified">✓ 확인된 정보</span>':'')
       +(p.poc?'<span class="status-chip poc">PoC 후보</span>':'')
-      +'<span class="hr-score">HOT '+hot트렌드ScoreV9(p)+'</span></div>'
-      +'<div class="hr-meta">'+esc(p.by)+' · 댓글 '+(p.commentList||[]).length+' · 수정 제안 '+(p.suggestions||[]).length+'</div>'
+      +'</div>'
+      +'<div class="hr-meta">'+esc(anonIdentityV11(p))+' · 댓글 '+(p.commentList||[]).length+' · 수정 제안 '+(p.suggestions||[]).length+'</div>'
       +'<div class="hr-body">'+esc(p.body)+'</div></div>').join('')+'</div></section>'
-
-    +'<section class="home-section keep-metaphor"><div class="home-section-head"><h3>👑 이번 분기 다독왕 TOP 3</h3><button onclick="nav(\'my\')">내 활동 →</button></div>'
-    +'<div class="card home-panel"><div class="reader-top3">'+TOP_READERS.slice(0,3).map((r,i)=>'<div class="reader-rank-card r'+(i+1)+'">'
-      +'<div class="rr-rank">'+(i+1)+'</div><div><div class="rr-name">'+esc(r.name)+'</div><div class="rr-dept">'+esc(readerDeptV9(r.name))+'</div></div>'
-      +'<div class="rr-count">'+r.cnt+'개 활용</div></div>').join('')+'</div>'
-      +'<div class="reader-note">업무 활용 기록만 집계하며 인사평가·기여 점수와 연결하지 않습니다.</div></div></section>'
-    +'</div>'
 
     +'<section class="home-section"><div class="home-section-head"><h3>🤝 AI 공동 개발 요청</h3>'
     +'<button onclick="nav(\'orchestra\')">전체 보기 →</button></div>'
     +'<div class="collab-request-grid">'+(collabs.length?collabs.map(e=>'<div class="card collab-request-card" onclick="nav(\'orchestra\')">'
       +'<span class="cr-badge">참여자 모집</span><div class="cr-title">'+esc(e.title)+'</div>'
-      +'<div class="cr-meta">요청자 '+esc(e.owner||((e.by||'').split('(')[0]))+' · '+esc(e.projectStatus||'IN_PROGRESS')+'</div>'
+      +'<div class="cr-meta">요청자 '+esc(e.owner||((e.by||'').split('(')[0]))+' · '+esc(projectStatusKoV8(e.projectStatus||'IN_PROGRESS'))+'</div>'
       +'<div class="cr-role">필요 역할: '+esc(roleTextV9(e))+'</div></div>').join('')
       :'<div class="card collab-request-card"><div class="cr-title">현재 모집 중인 AI 공동 개발 요청이 없습니다.</div></div>')+'</div></section>'
 
@@ -5255,8 +5344,6 @@ renderMy=function(mode){
     +'<div class="asset-vault-tabs"><button class="'+(mode==='reader'?'active':'')+'" onclick="renderMyIn(\'reader\')">가져온 자산</button>'
     +'<button class="'+(mode==='creator'?'active':'')+'" onclick="renderMyIn(\'creator\')">내가 만든 자산</button></div></div>';
 
-  h+='<div id="ms-ring-host">'+milestoneRing(totalPts)+'</div>';
-
   if(mode==='reader'){
     h+='<div class="section-title" style="margin-top:22px">가져온 AI 자산 <small>'+shelf.length+'개 · 내 업무 환경에서 다시 열 수 있습니다</small></div>';
     if(shelf.length){
@@ -5271,10 +5358,7 @@ renderMy=function(mode){
     }
 
     h+='<div class="section-title">🗓 활동 캘린더 <small>자산을 가져오거나 실행한 날짜</small></div>'
-      +'<div id="cal-host">'+cleanAssetTextV10(renderCalendar())+'</div>'
-      +'<div class="card widget" style="margin-top:14px"><h4>👑 다독왕 진행</h4>'
-      +'<div style="font-size:.94rem">이번 분기 나의 자산 활용 <b>'+(19+shelf.length)+'개</b> — TOP 기준 25개까지 <b style="color:var(--green)">'+Math.max(0,25-(19+shelf.length))+'개</b> 남았습니다.</div>'
-      +'<div class="note">다독왕은 평가나 기여 점수가 아닌 가벼운 활용 기록입니다.</div></div>';
+      +'<div id="cal-host">'+cleanAssetTextV10(renderCalendar())+'</div>';
   }else{
     h+='<div class="contribution-summary">'
       +'<div class="card contribution-card"><div class="cc-label">누적 기여 점수</div><div class="cc-value">'+totalPts+'점</div><div class="cc-desc">승인된 공급 활동만 기록</div></div>'
@@ -5307,18 +5391,7 @@ renderMy=function(mode){
       +'<div class="cscore '+((l.pts||0)>0?'plus':'zero')+'">'+((l.pts||0)>0?'+'+l.pts:'±0')+'</div></div>').join('')
     +'<div style="padding:10px 18px;font-size:.77rem;color:var(--ink-faint)">기여 점수가 없는 활용 활동도 개인 활동 기록에는 남습니다.</div></div>';
 
-  const earned=Object.entries(state.badges).filter(([k,b])=>b.earned);
-  const useN=earned.filter(([k,b])=>b.kind!=='author').length;
-  const buildN=earned.filter(([k,b])=>b.kind==='author').length;
-  h+='<div class="section-title activity-aquarium-title">🐠 활동 어항 <small>활용과 제작 마일스톤을 가볍게 수집</small></div>'
-    +'<div class="aquarium-wrap"><div class="aquarium" id="aquarium"><div class="weed" style="left:8%">🌿</div><div class="weed" style="left:46%;animation-delay:-2s">🪸</div><div class="weed" style="left:82%;animation-delay:-1s">🌿</div>'
-    +[12,30,55,74,90].map((x,i)=>'<div class="bubble" style="left:'+x+'%;animation-delay:-'+(i*1.4)+'s"></div>').join('')
-    +earned.map(([k,b],i)=>'<div class="fish" style="'+fishStyle(i)+'" title="'+esc(badgeDisplayV10(k,b).nm)+'"><span class="f-inner">'+b.fish+'</span></div>').join('')
-    +'<div class="sand"></div></div><div class="aq-caption"><span class="pill">물고기 '+earned.length+'마리</span><span class="pill">활용 '+useN+' · 제작 '+buildN+'</span><span class="pill">평가·교환과 무관한 기록</span></div>'
-    +'<div class="badge-list">'+Object.entries(state.badges).map(([k,b])=>{const d=badgeDisplayV10(k,b);return '<div class="badge-card'+(b.earned?' earned':'')+'"><span class="bic">'+b.fish+'</span><div><div class="bnm">'+esc(d.nm)+' <span class="activity-kind '+d.kind+'">'+(d.kind==='build'?'제작':'활용')+'</span></div><div class="bds">'+esc(d.ds)+'</div></div></div>';}).join('')+'</div></div>';
-
   document.getElementById('screen-my').innerHTML=h;
-  animateRing();
   animateHbars();
 };
 renderMyIn=function(mode){renderMy(mode);};
@@ -5501,12 +5574,33 @@ function openAnonProfileV11(id){
     +'<div class="anon-profile-list">'+posts.map(x=>'<div class="anon-profile-post"><b>'+esc(x.title)+'</b><div style="font-size:.78rem;color:var(--ink-soft);margin-top:4px">'+esc(x.body).slice(0,120)+'</div></div>').join('')+'</div>'
     +'<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">닫기</button></div>');
 }
+let _trendDraftImageV11=null;
 function openTrendWriteV11(){
-  openModal('<h3>새 스레드 작성</h3><div class="desc">완성된 정보가 아니어도 괜찮습니다. 실명과 부서는 노출되지 않으며, 경험·질문·실패담을 익명으로 편하게 나눌 수 있습니다.</div>'
+  _trendDraftImageV11=null;
+  openModal('<h3>글 적기</h3><div class="desc">완성된 정보가 아니어도 괜찮습니다. 실명과 부서는 노출되지 않으며, 경험·질문·실패담을 익명으로 편하게 나눌 수 있습니다.</div>'
     +'<div class="formrow"><div class="lb">본문</div><textarea id="trend-body-v11" rows="6" placeholder="써본 AI 후기, 궁금한 점, 실패한 경험, 새로 발견한 기능을 편하게 적어 주세요."></textarea></div>'
+    +'<div class="formrow"><div class="lb">사진 <span class="hint">선택</span></div>'
+      +'<input id="trend-image-v11" type="file" accept="image/*" style="display:none" onchange="onTrendImagePickV11(event)">'
+      +'<button type="button" class="file-pick" onclick="document.getElementById(\'trend-image-v11\').click()">📷 사진 선택 (스크린샷·결과 화면 등)</button>'
+      +'<div id="trend-image-preview-v11" style="margin-top:8px"></div></div>'
     +'<div class="formrow"><div class="lb">링크 <span class="hint">선택</span></div><input id="trend-source-v11" type="text" placeholder="https://"></div>'
     +'<div class="formrow"><div class="lb">태그</div><input id="trend-tags-v11" type="text" placeholder="예: Claude, Copilot, 업무자동화"></div>'
     +'<div class="modal-actions"><button class="btn btn-primary" onclick="submitTrendPostV11()">익명으로 게시</button><button class="btn btn-ghost" onclick="closeModal()">취소</button></div>');
+}
+function onTrendImagePickV11(ev){
+  const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    _trendDraftImageV11=e.target.result;
+    const box=document.getElementById('trend-image-preview-v11');
+    if(box)box.innerHTML='<div class="trend-media" style="max-width:280px;position:relative"><img src="'+_trendDraftImageV11+'" alt="미리보기" style="width:100%;display:block;border-radius:8px"><button type="button" class="btn btn-ghost" style="position:absolute;top:6px;right:6px;padding:2px 8px" onclick="clearTrendImageV11()">✕ 제거</button></div>';
+  };
+  reader.readAsDataURL(f);
+}
+function clearTrendImageV11(){
+  _trendDraftImageV11=null;
+  const box=document.getElementById('trend-image-preview-v11');if(box)box.innerHTML='';
+  const inp=document.getElementById('trend-image-v11');if(inp)inp.value='';
 }
 function submitTrendPostV11(){
   const body=(document.getElementById('trend-body-v11')||{}).value?.trim();
@@ -5514,10 +5608,11 @@ function submitTrendPostV11(){
   const tagsRaw=(document.getElementById('trend-tags-v11')||{}).value||'';
   if(!body)return;
   const p={id:'TR-'+Date.now(),title:body.split('\n')[0].slice(0,45),body,sourceUrl,
+    imageUrl:_trendDraftImageV11||null,
     by:'anonymous',ago:'방금',tags:tagsRaw.split(',').map(x=>x.trim()).filter(Boolean),
     verified:false,poc:false,commentList:[],suggestions:[],reports:0,likes:0,reposts:0,liked:false,reposted:false};
-  anonIdentityV11(p);RADAR_POSTS.unshift(p);
-  closeModal();state.radarTab='latest';savePersistentStateV7(false);renderRadar();toast('익명 스레드가 게시되었습니다');
+  anonIdentityV11(p);RADAR_POSTS.unshift(p);_trendDraftImageV11=null;
+  closeModal();state.radarTab='latest';savePersistentStateV7(false);renderRadar();toast('익명 글이 게시되었습니다');
 }
 function renderRadar(){
   if(!state.radarTab||state.radarTab==='poc')state.radarTab='popular';
@@ -5527,7 +5622,7 @@ function renderRadar(){
   document.getElementById('screen-radar').innerHTML=
     '<div class="trend-shell">'
     +'<div class="trend-toolbar"><div class="trend-title-wrap"><h2>AI 트렌드</h2><p>써본 후기·궁금한 점·새 소식을 익명으로 편하게 나눠보세요.</p></div><div class="trend-search"><span>⌕</span><input value="'+esc(state.trendQuery||'')+'" oninput="setTrendQueryV11(this.value)" placeholder="궁금한 이야기 검색"></div>'
-    +'<button class="trend-write-btn" onclick="openTrendWriteV11()">새 스레드</button></div>'
+    +'<button class="trend-write-btn" onclick="openTrendWriteV11()">글 적기</button></div>'
     +'<nav class="trend-tabs">'+[['popular','인기 이야기'],['latest','최신 이야기'],['verified','확인된 정보']].map(t=>'<button class="'+(state.radarTab===t[0]?'active':'')+'" onclick="setRadarTab(\''+t[0]+'\')">'+t[1]+'</button>').join('')+'</nav>'
     +'<div class="trend-composer" onclick="openTrendWriteV11()"><div class="trend-composer-avatar">익</div><div class="trend-composer-placeholder">최근 써본 AI, 궁금한 점, 실패담도 편하게 남겨보세요.</div></div>'
     +'<main class="trend-feed">'+(list.length?list.map((p,idx)=>{
@@ -5536,7 +5631,7 @@ function renderRadar(){
       const suggestions=p.suggestions||[];
       return '<article class="trend-post"><div class="trend-avatar-col"><div class="trend-avatar">익</div>'+(idx<list.length-1?'<div class="trend-thread-line"></div>':'')+'</div>'
         +'<div class="trend-content"><div class="trend-head"><span class="trend-author" onclick="openAnonProfileV11(\''+p.id+'\')">'+esc(anon)+'</span>'
-        +(p.verified?'<span class="thread-verified">●</span>':'')+'<span class="trend-anon-handle">'+esc(p.anonHandle)+'</span><span class="trend-time">· '+esc(p.ago)+'</span>'
+        +(p.verified?'<span class="thread-verified">✓ 확인된 정보</span>':'')+'<span class="trend-anon-handle">'+esc(p.anonHandle)+'</span><span class="trend-time">· '+esc(p.ago)+'</span>'
         +'<button class="trend-more">•••</button></div>'
         +'<div class="trend-text">'+esc(p.body)+'</div>'
         +trendMediaV11(p,idx)
@@ -5817,13 +5912,28 @@ nav(state.screen&&state.screen!=='detail'?state.screen:'home');
      ⑤ 라이브 모드 토글 UI (body에 고정 — 화면 전환에도 유지)
      ============================================================ */
   function updateToggleUI(){
-    const box = document.getElementById('ax-live-toggle'); if(!box) return;
-    const dot = AXLIVE.online===true ? '#25a35a' : (AXLIVE.online===false ? '#d0453a' : '#8b95a3');
-    const dotTxt = AXLIVE.online===true ? '서버 연결됨' : (AXLIVE.online===false ? '서버 미연결' : '상태 확인 전');
-    box.querySelector('.ax-dot').style.background = dot;
-    box.querySelector('.ax-dot-txt').textContent = dotTxt;
-    box.querySelector('.ax-sw').textContent = AXLIVE.enabled ? 'ON' : 'OFF';
-    box.classList.toggle('on', AXLIVE.enabled);
+    const box = document.getElementById('ax-live-toggle');
+    if(box){
+      const dot = AXLIVE.online===true ? '#25a35a' : (AXLIVE.online===false ? '#d0453a' : '#8b95a3');
+      const dotTxt = AXLIVE.online===true ? '서버 연결됨' : (AXLIVE.online===false ? '서버 미연결' : '상태 확인 전');
+      box.querySelector('.ax-dot').style.background = dot;
+      box.querySelector('.ax-dot-txt').textContent = dotTxt;
+      box.querySelector('.ax-sw').textContent = AXLIVE.enabled ? 'ON' : 'OFF';
+      box.classList.toggle('on', AXLIVE.enabled);
+    }
+    updateBannerUI();
+  }
+  /* 화면 상단 LIVE/MOCK 상태 배너 — 발표자가 실행 모드를 한눈에 확인 */
+  function updateBannerUI(){
+    const b = document.getElementById('ax-mode-banner'); if(!b) return;
+    let cls, txt;
+    if(AXLIVE.enabled && AXLIVE.online===true){ cls='live'; txt='🟢 LIVE · FastAPI 연결됨 ('+AXLIVE.base.replace(/^https?:\/\//,'')+')'; }
+    else if(AXLIVE.enabled && AXLIVE.online===false){ cls='warn'; txt='🔴 LIVE(ON) · Backend 미연결 — 목업으로 대체 중'; }
+    else if(AXLIVE.enabled){ cls='warn'; txt='🟡 LIVE(ON) · 서버 상태 확인 중…'; }
+    else if(AXLIVE.online===true){ cls='mock'; txt='⚪ MOCK · 목업 모드 (Backend 연결 가능 — 클릭해 LIVE 전환)'; }
+    else { cls='mock'; txt='⚪ MOCK · 목업 모드 (Backend 연결 안 됨)'; }
+    b.className = 'ax-mode-'+cls;
+    b.querySelector('.amb-txt').textContent = txt;
   }
   window.axToggleLive = async function(){
     AXLIVE.enabled = !AXLIVE.enabled;
@@ -5850,6 +5960,13 @@ nav(state.screen&&state.screen!=='detail'?state.screen:'home');
       + 'table.ax-hist{width:100%;border-collapse:collapse;margin:10px 0;font-size:.85rem}'
       + 'table.ax-hist th,table.ax-hist td{border-bottom:1px solid var(--line,#e4e8ee);padding:7px 9px;text-align:left;white-space:nowrap}'
       + 'table.ax-hist th{color:#8b95a3;font-weight:700}';
+    style.textContent += '#ax-mode-banner{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9998;'
+      + 'padding:7px 16px;border-radius:20px;font-size:.82rem;font-weight:800;font-family:var(--font);cursor:pointer;'
+      + 'box-shadow:0 2px 12px rgba(20,40,70,.16);border:1px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:8px}'
+      + '#ax-mode-banner .amb-hint{font-size:.72rem;font-weight:600;opacity:.75}'
+      + '.ax-mode-live{background:#e7f6ec;color:#1f8a4c;border-color:#a6e0bd}'
+      + '.ax-mode-mock{background:#eef1f5;color:#5a6472;border-color:#d3dae6}'
+      + '.ax-mode-warn{background:#fdecea;color:#c0392b;border-color:#f4c3bd}';
     document.head.appendChild(style);
     const box = document.createElement('div');
     box.id = 'ax-live-toggle';
@@ -5857,12 +5974,19 @@ nav(state.screen&&state.screen!=='detail'?state.screen:'home');
       + '<div class="ln"><span class="ax-dot"></span><span class="ax-dot-txt">상태 확인 전</span>'
       + '<span style="margin-left:auto;cursor:pointer;text-decoration:underline" onclick="window.AXLIVE&&axPingPublic()">새로고침</span></div>';
     document.body.appendChild(box);
+    const banner = document.createElement('div');
+    banner.id = 'ax-mode-banner';
+    banner.className = 'ax-mode-mock';
+    banner.title = '클릭하면 LIVE/MOCK 모드를 전환합니다';
+    banner.onclick = function(){ axToggleLive(); };
+    banner.innerHTML = '<span class="amb-txt">⚪ MOCK · 목업 모드</span>';
+    document.body.appendChild(banner);
     updateToggleUI();
   }
   window.axPingPublic = axPing;
 
   injectToggle();
-  if(AXLIVE.enabled) axPing();
+  axPing();  /* 시연 전 헬스체크 — enabled 여부와 무관하게 백엔드 상태를 확인해 배너에 반영 */
 })();
 </script>
 
