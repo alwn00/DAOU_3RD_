@@ -55,6 +55,11 @@
     let current=modelValueV12(d);
     if(existing&&existing.value)current=existing.value;
 
+    if(existing){
+      const oldRow=existing.closest('.formrow');
+      if(oldRow)oldRow.remove();
+    }
+
     const card=document.createElement('div');
     card.className='card tool-model-card-v12';
     card.innerHTML=
@@ -62,23 +67,14 @@
       '<div class="tm-desc">구독 플랜이 아니라 실제 제작에 사용한 도구와 모델만 기록합니다. 사용자는 자산을 선택할 때 이 정보를 참고할 수 있습니다.</div>'+ 
       '<div class="tool-model-grid-v12">'+
         '<div class="tool-model-item-v12"><div class="label">사용 도구</div><div class="value">'+esc(toolNameV12(d))+'</div></div>'+ 
-        '<div class="tool-model-item-v12"><div class="label">사용 모델</div><input id="reg-base-v12" list="model-options-v12" value="'+esc(current)+'" placeholder="예: Gemini 2.5 Pro, Claude Sonnet"><datalist id="model-options-v12"><option value="Gemini 2.5 Pro"><option value="Gemini 2.5 Flash"><option value="Claude Sonnet"><option value="Claude Opus"><option value="GPT-4o (Copilot)"><option value="기타/사내 모델"></datalist></div>'+ 
+        '<div class="tool-model-item-v12"><div class="label">사용 모델</div><input id="reg-base" list="model-options-v12" value="'+esc(current)+'" placeholder="예: Gemini 2.5 Pro, Claude Sonnet"><datalist id="model-options-v12"><option value="Gemini 2.5 Pro"><option value="Gemini 2.5 Flash"><option value="Claude Sonnet"><option value="Claude Opus"><option value="GPT-4o (Copilot)"><option value="기타/사내 모델"></datalist></div>'+ 
       '</div>';
     selected.insertAdjacentElement('afterend',card);
 
-    if(existing){
-      const oldRow=existing.closest('.formrow');
-      if(oldRow)oldRow.style.display='none';
-      existing.value=current;
-    }
-
-    const visible=document.getElementById('reg-base-v12');
+    const visible=document.getElementById('reg-base');
     if(visible){
-      visible.addEventListener('input',function(){
-        d.baseModel=this.value;
-        const hidden=document.getElementById('reg-base');
-        if(hidden)hidden.value=this.value;
-      });
+      visible.addEventListener('input',function(){d.baseModel=this.value;});
+      visible.addEventListener('change',function(){d.baseModel=this.value;});
     }
   }
 
