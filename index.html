@@ -14,10 +14,10 @@ html,body{margin:0;min-height:100%;background:#f3f5f8;font-family:Pretendard,'Ap
 <script>
 (async function(){
   try{
-    const response=await fetch('./app-base.html?v=20260714-7',{cache:'no-store'});
+    const response=await fetch('./app-base.html?v=20260714-8',{cache:'no-store'});
     if(!response.ok)throw new Error('HTTP '+response.status);
     let html=await response.text();
-    html=html.replace('</body>','<script src="./ui-patch.js?v=20260714-7"><\/script><script src="./service-guide-patch.js?v=20260714-7"><\/script><script src="./register-ui-patch.js?v=20260714-7"><\/script><script src="./register-ui-compat.js?v=20260714-7"><\/script><script src="./tool-model-patch.js?v=20260714-7"><\/script></body>');
+    html=html.replace('</body>','<script src="./ui-patch.js?v=20260714-8"><\/script><script src="./service-guide-patch.js?v=20260714-8"><\/script><script src="./register-ui-patch.js?v=20260714-8"><\/script><script src="./register-ui-compat.js?v=20260714-8"><\/script><script src="./tool-model-patch.js?v=20260714-8"><\/script><script src="./usage-dashboard-patch.js?v=20260714-8"><\/script></body>');
     document.open();
     document.write(html);
     document.close();
