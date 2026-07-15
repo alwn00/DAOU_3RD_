@@ -11,6 +11,7 @@
   const me=()=>window.ME?.name||'박서연';
   let currentMode='reader';
   let scheduled=false;
+  let repairing=false;
 
   const style=document.createElement('style');
   style.textContent=`
@@ -40,8 +41,7 @@
   function ensureSingleTab(mode=currentMode){
     const root=q('#screen-my');if(!root)return;
     const tabs=q('.asset-vault-tabs',root);if(!tabs)return;
-    const buttons=qa('button',tabs);
-    const collabs=buttons.filter(b=>/공동\s*개발\s*관리/.test((b.textContent||'').trim()));
+    const collabs=qa('button',tabs).filter(b=>/공동\s*개발\s*관리/.test((b.textContent||'').trim()));
     collabs.forEach(b=>b.remove());
     const button=document.createElement('button');
     button.type='button';button.textContent='공동 개발 관리';button.dataset.collabFinal='1';
@@ -85,7 +85,6 @@
     const head=oldHead?oldHead.outerHTML:'<div class="asset-vault-head"><div><h2>내 자산함</h2><p>내가 보유·제작·공동 개발한 AI 자산을 관리합니다.</p></div><div class="asset-vault-tabs"></div></div>';
     root.innerHTML=head+'<section class="classic-collab-wrap"><div class="classic-collab-head"><div><h3>공동 개발 관리</h3><p>내가 시작한 공동 개발과 참여 중인 자산을 확인합니다.</p></div><button class="btn btn-primary" onclick="nav(\'orchestra\')">공동 개발 둘러보기</button></div><div class="section-title">내가 주 소유자인 공동 개발 <small>'+owned.length+'건</small></div><div class="card classic-collab-list">'+(owned.length?owned.map(p=>projectRow(p,'owner')).join(''):'<div class="classic-collab-empty">주 소유자로 진행 중인 공동 개발이 없습니다.</div>')+'</div><div class="section-title">내가 공동 개발에 참여한 자산 <small>'+joined.length+'건</small></div><div class="card classic-collab-list">'+(joined.length?joined.map(p=>projectRow(p,'co')).join(''):'<div class="classic-collab-empty">공동 소유자로 참여한 자산이 없습니다.</div>')+'</div><div class="section-title">채택한 개선 제안 <small>'+improvements.length+'건</small></div><div class="card">'+improvementRows(improvements)+'</div></section>';
     ensureSingleTab('collab');
-    if(typeof addBack==='function')addBack('my');
   }
 
   const baseRenderMy=window.renderMy;
@@ -104,16 +103,26 @@
   };
   window.renderMyIn=function(mode){return window.renderMy(mode||'reader');};
 
+  let observer;
   function scheduleRepair(){
-    if(scheduled)return;scheduled=true;
+    if(scheduled||repairing)return;
+    scheduled=true;
     setTimeout(()=>{
       scheduled=false;
       if(window.state?.screen!=='my')return;
-      if(currentMode==='collab')renderClassicManagement();
-      else ensureSingleTab(currentMode);
+      const needsManagement=currentMode==='collab'&&!q('#screen-my .classic-collab-wrap');
+      if(needsManagement){
+        repairing=true;
+        observer.disconnect();
+        renderClassicManagement();
+        observer.observe(document.body,{childList:true,subtree:true});
+        repairing=false;
+      }else{
+        ensureSingleTab(currentMode);
+      }
     },30);
   }
-  const observer=new MutationObserver(scheduleRepair);
+  observer=new MutationObserver(scheduleRepair);
   observer.observe(document.body,{childList:true,subtree:true});
 
   setTimeout(()=>{
