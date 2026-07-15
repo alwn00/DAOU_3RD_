@@ -1,4 +1,4 @@
-/* Reader asset tab: hide score/aquarium, remove grass, collapse activity logs */
+/* Reader asset tab: hide score, remove grass, collapse activity logs */
 (function(){
   'use strict';
   if(window.__DAOU_READER_ACTIVITY_FIX__)return;
@@ -23,17 +23,6 @@
     if(ring)ring.remove();
 
     root.querySelectorAll('.grass-wrap').forEach(el=>el.remove());
-
-    const aquariumTitle=[...root.querySelectorAll('.section-title')].find(el=>/활동 어항/.test((el.textContent||'').trim()));
-    if(aquariumTitle){
-      let node=aquariumTitle.nextElementSibling;
-      while(node&&!node.classList.contains('section-title')){
-        const next=node.nextElementSibling;
-        node.remove();
-        node=next;
-      }
-      aquariumTitle.remove();
-    }
 
     const exact=[...root.querySelectorAll('*')].filter(el=>{
       const own=[...el.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.nodeValue||'').join(' ');
