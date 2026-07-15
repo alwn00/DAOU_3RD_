@@ -1,4 +1,4 @@
-/* Final my-assets layout: reader card/list switch, reader cleanup, creator score order */
+/* Final my-assets layout: reader card/list switch, reader aquarium, creator score order */
 (function(){
   'use strict';
   if(window.__DAOU_MY_ASSETS_LAYOUT_FIX__)return;
@@ -124,7 +124,6 @@
     const ring=root.querySelector('#ms-ring-host');
     if(ring)ring.remove();
     root.querySelectorAll('.grass-wrap').forEach(el=>el.remove());
-    removeSectionV17(root,/활동 어항/);
     ensureReaderActivityV17(root);
     ensureReaderViewV17(root);
   }
@@ -136,6 +135,7 @@
       ring.classList.add('creator-score-top-v17');
       head.insertAdjacentElement('afterend',ring);
     }
+    removeSectionV17(root,/활동 어항/);
   }
 
   function applyMyAssetsLayoutV17(mode){
