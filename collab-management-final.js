@@ -1,4 +1,4 @@
-/* Final collaboration management UI: one tab, classic vault list */
+/* Final collaboration management UI: one tab, reference-style progress cards */
 (function(){
   'use strict';
   if(window.__DAOU_COLLAB_FINAL__)return;
@@ -18,13 +18,21 @@
     .classic-collab-wrap{margin-top:14px}
     .classic-collab-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:18px 0 12px}
     .classic-collab-head h3{font-size:1rem;margin:0}.classic-collab-head p{margin-top:3px;font-size:.75rem;color:var(--ink-soft)}
-    .classic-collab-list{overflow:hidden}.classic-collab-row{display:grid;grid-template-columns:44px minmax(260px,1fr) auto minmax(210px,auto);gap:12px;align-items:center;padding:13px 15px;border-bottom:1px solid var(--line-soft);min-height:88px}.classic-collab-row:last-child{border-bottom:0}
-    .classic-collab-row .vr-icon{width:38px;height:38px;border-radius:6px;background:var(--gw-blue-tint);display:grid;place-items:center;font-size:1rem}
-    .classic-collab-row .vr-title{font-size:.84rem;font-weight:900}.classic-collab-row .vr-meta{font-size:.67rem;color:var(--ink-faint);margin-top:3px}.classic-collab-row .model{font-size:.68rem;color:var(--ink-soft);margin-top:4px}
-    .classic-collab-row .vr-actions{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}.classic-collab-row .btn{padding:7px 9px;font-size:.64rem;white-space:nowrap}
-    .classic-collab-empty{padding:28px;text-align:center;color:var(--ink-faint);font-size:.76rem}
+    .classic-collab-list{display:flex;flex-direction:column;gap:14px;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible}
+    .collab-progress-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px;box-shadow:var(--shadow)}
+    .collab-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .collab-card-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.collab-card-title h4{font-size:.95rem;font-weight:900;margin:0}.collab-role-label{font-size:.64rem;padding:3px 7px;border-radius:4px;background:#f0f2f5;color:var(--ink-faint);font-weight:800}.collab-role-label.owner{background:#eef3ff;color:#4e54a6}.collab-role-label.joined{background:#eef8f6;color:#16776e}
+    .collab-percent{font-size:.92rem;font-weight:900;color:#5b39a6}
+    .collab-progress{height:14px;background:#eef0f4;border-radius:5px;overflow:hidden;margin:14px 0 12px}.collab-progress i{display:block;height:100%;background:#5a36a5;border-radius:5px}
+    .collab-next{padding:10px 13px;border:1px solid #c8e2f4;background:#eaf6ff;border-radius:5px;font-size:.72rem;color:#4a6172}.collab-next b{color:#12679d;margin-right:5px}
+    .collab-made{margin-top:12px;padding:13px 15px;border:1px solid #bed9e9;background:#e6f3fa;border-radius:6px}.collab-made b{display:block;font-size:.78rem;color:#11699d;margin-bottom:3px}.collab-made p{font-size:.73rem;color:#647584;line-height:1.55;margin:0}
+    .collab-ownerline{margin-top:10px;font-size:.68rem;color:var(--ink-faint)}
+    .collab-model-line{margin-top:7px;font-size:.68rem;color:var(--ink-soft)}
+    .collab-roles-title{font-size:.74rem;font-weight:900;margin-top:13px}.collab-roles{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}.collab-roles span{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #d9cafa;background:#f2ecff;color:#5c3c99;border-radius:5px;font-size:.67rem;font-weight:800}
+    .collab-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:13px}.collab-card-status{display:flex;align-items:center;gap:8px;font-size:.74rem;font-weight:900}.collab-card-status .muted{font-size:.66rem;color:var(--ink-faint);font-weight:500}.collab-card-actions{display:flex;gap:6px;flex-wrap:wrap}.collab-card-actions .btn{padding:7px 9px;font-size:.64rem;white-space:nowrap}
+    .classic-collab-empty{padding:28px;text-align:center;color:var(--ink-faint);font-size:.76rem;background:#fff;border:1px solid var(--line);border-radius:6px}
     .classic-improvement-row{display:grid;grid-template-columns:40px minmax(240px,1fr) auto;gap:12px;align-items:center;padding:12px 15px;border-bottom:1px solid var(--line-soft)}.classic-improvement-row:last-child{border-bottom:0}.classic-improvement-row .ic{width:34px;height:34px;border-radius:6px;background:var(--gold-tint);display:grid;place-items:center}.classic-improvement-row b{font-size:.8rem}.classic-improvement-row p{font-size:.69rem;color:var(--ink-soft);margin-top:3px}.classic-improvement-row .actions{display:flex;gap:6px;flex-wrap:wrap}.classic-improvement-row .btn{padding:7px 9px;font-size:.64rem}
-    @media(max-width:850px){.classic-collab-row{grid-template-columns:40px 1fr}.classic-collab-row>.status-chip{grid-column:2}.classic-collab-row .vr-actions{grid-column:1/-1;justify-content:flex-start}.classic-improvement-row{grid-template-columns:36px 1fr}.classic-improvement-row .actions{grid-column:1/-1}.classic-collab-head{flex-direction:column}}
+    @media(max-width:850px){.classic-improvement-row{grid-template-columns:36px 1fr}.classic-improvement-row .actions{grid-column:1/-1}.classic-collab-head{flex-direction:column}.collab-card-bottom{align-items:flex-start;flex-direction:column}}
   `;
   document.head.appendChild(style);
 
@@ -55,20 +63,22 @@
   }
 
   function status(p){
-    if(p.status==='COMPLETED')return {label:'등록 완료',cls:'verified'};
-    if((p.co||[]).length||p.status==='IN_PROGRESS')return {label:'공동 개발 중',cls:'poc'};
-    return {label:'참여자 모집',cls:''};
+    if(p.status==='COMPLETED')return {label:'등록 완료',pct:100};
+    if((p.co||[]).length||p.status==='IN_PROGRESS')return {label:'공동 개발 중',pct:60};
+    return {label:'참여자 모집',pct:35};
   }
   function projectRow(p,role){
     const s=status(p),pending=(p.apps||[]).filter(a=>a.status==='APPLIED').length;
     const canRegister=role==='owner'||!!p.perm?.[me()]?.version;
     const model=p.modelCard?.baseModel||p.model||'모델 미정';
     const data=p.modelCard?.dataSource||'사용 데이터 미입력';
+    const nextRole=(p.roles||[])[0]||'공동 개발 결과 검수';
+    const roleChips=(p.roles||[]).length?(p.roles||[]).map(r=>'<span>🙋 '+escText(r)+'</span>').join(''):'<span>🙋 참여 역할 협의 중</span>';
     let actions='';
     if(role==='owner')actions+='<button class="btn btn-primary" onclick="applicantsV22(\''+p.id+'\')">지원자 '+pending+'</button><button class="btn btn-ghost" onclick="permissionsV22(\''+p.id+'\')">권한 관리</button>';
     if(canRegister)actions+='<button class="btn btn-secondary" onclick="prepareProjectRegisterV22(\''+p.id+'\')">모델·자산 등록</button>';
     else actions+='<span class="pill">등록 권한 없음</span>';
-    return '<div class="classic-collab-row"><div class="vr-icon">'+(role==='owner'?'🧩':'🤝')+'</div><div><div class="vr-title">'+escText(p.title)+'</div><div class="vr-meta">'+(role==='owner'?'주 소유':'공동 참여')+' · '+escText(p.type||'자산')+' · '+escText(p.tool||'도구 미정')+' · 주 소유자 '+escText(p.owner)+'</div><div class="model"><b>모델 카드</b> '+escText(model)+' · '+escText(data)+' · '+escText(p.modelCard?.license||'부서 한정')+'</div></div><span class="status-chip '+s.cls+'">'+s.label+'</span><div class="vr-actions">'+actions+'</div></div>';
+    return '<article class="collab-progress-card"><div class="collab-card-top"><div class="collab-card-title"><span>🤝</span><h4>'+escText(p.title)+'</h4><span class="collab-role-label '+(role==='owner'?'owner':'joined')+'">'+(role==='owner'?'주 소유':'공동 참여')+'</span></div><strong class="collab-percent">'+s.pct+'%</strong></div><div class="collab-progress"><i style="width:'+s.pct+'%"></i></div><div class="collab-next"><b>다음 할 일 ·</b>'+escText(nextRole)+' 완료 후 결과 범위와 모델 카드를 점검합니다.</div><div class="collab-made"><b>지금까지 만든 것</b><p>'+escText(p.made||p.problem||'공동 개발 내용을 정리하고 있습니다.')+'</p></div><div class="collab-ownerline">발제·제작: '+escText(p.owner)+' · 공동 소유자 '+((p.co||[]).length?escText(p.co.join(', ')):'없음')+'</div><div class="collab-model-line"><b>모델 카드</b> '+escText(model)+' · '+escText(data)+' · '+escText(p.modelCard?.license||'부서 한정')+'</div><div class="collab-roles-title">🔎 함께할 역할</div><div class="collab-roles">'+roleChips+'</div><div class="collab-card-bottom"><div class="collab-card-status">🤝 '+s.label+' <span class="muted">'+(role==='owner'?'지원자 확인과 권한 관리 가능':'공동 소유자로 참여 중')+'</span></div><div class="collab-card-actions">'+actions+'</div></div></article>';
   }
   function improvementRows(list){
     if(!list.length)return '<div class="classic-collab-empty">채택 후 등록을 기다리는 개선 제안이 없습니다.</div>';
@@ -83,7 +93,7 @@
     const improvements=d.imps.filter(i=>i.status==='ACCEPTED'&&mineAsset(i.assetId));
     const oldHead=q('.asset-vault-head',root);
     const head=oldHead?oldHead.outerHTML:'<div class="asset-vault-head"><div><h2>내 자산함</h2><p>내가 보유·제작·공동 개발한 AI 자산을 관리합니다.</p></div><div class="asset-vault-tabs"></div></div>';
-    root.innerHTML=head+'<section class="classic-collab-wrap"><div class="classic-collab-head"><div><h3>공동 개발 관리</h3><p>내가 시작한 공동 개발과 참여 중인 자산을 확인합니다.</p></div><button class="btn btn-primary" onclick="nav(\'orchestra\')">공동 개발 둘러보기</button></div><div class="section-title">내가 주 소유자인 공동 개발 <small>'+owned.length+'건</small></div><div class="card classic-collab-list">'+(owned.length?owned.map(p=>projectRow(p,'owner')).join(''):'<div class="classic-collab-empty">주 소유자로 진행 중인 공동 개발이 없습니다.</div>')+'</div><div class="section-title">내가 공동 개발에 참여한 자산 <small>'+joined.length+'건</small></div><div class="card classic-collab-list">'+(joined.length?joined.map(p=>projectRow(p,'co')).join(''):'<div class="classic-collab-empty">공동 소유자로 참여한 자산이 없습니다.</div>')+'</div><div class="section-title">채택한 개선 제안 <small>'+improvements.length+'건</small></div><div class="card">'+improvementRows(improvements)+'</div></section>';
+    root.innerHTML=head+'<section class="classic-collab-wrap"><div class="classic-collab-head"><div><h3>공동 개발 관리</h3><p>진행률과 다음 할 일, 현재 결과물을 중심으로 확인합니다.</p></div><button class="btn btn-primary" onclick="nav(\'orchestra\')">공동 개발 둘러보기</button></div><div class="section-title">내가 주 소유자인 공동 개발 <small>'+owned.length+'건</small></div><div class="classic-collab-list">'+(owned.length?owned.map(p=>projectRow(p,'owner')).join(''):'<div class="classic-collab-empty">주 소유자로 진행 중인 공동 개발이 없습니다.</div>')+'</div><div class="section-title">내가 공동 개발에 참여한 자산 <small>'+joined.length+'건</small></div><div class="classic-collab-list">'+(joined.length?joined.map(p=>projectRow(p,'co')).join(''):'<div class="classic-collab-empty">공동 소유자로 참여한 자산이 없습니다.</div>')+'</div><div class="section-title">채택한 개선 제안 <small>'+improvements.length+'건</small></div><div class="card">'+improvementRows(improvements)+'</div></section>';
     ensureSingleTab('collab');
   }
 
